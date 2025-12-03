@@ -1,0 +1,284 @@
+// src/services/conciliacao.service.js
+import { processFile } from "../utils/files.js";
+import OpenAI from "openai";
+
+// Cliente OpenAI lazy (só cria se tiver chave)
+let openaiClient = null;
+
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey });
+  }
+
+  return openaiClient;
+}
+
+/**
+ * Rodada 1: processamento inicial dos arquivos enviados
+ * - Lê PDFs / Excel via processFile
+ * - Normaliza em um formato padrão
+ */
+export async function prepararRodada1({ fornecedor, arquivos }) {
+  const resultado = {};
+
+  for (const [chave, fileInfo] of Object.entries(arquivos || {})) {
+    if (!fileInfo) continue;
+
+    const processado = await processFile(fileInfo);
+
+    resultado[chave] = {
+      nomeOriginal: fileInfo.originalname,
+      caminho: fileInfo.path,
+      mimetype: fileInfo.mimetype,
+      processado,
+    };
+  }
+
+  return {
+    fornecedor,
+    status: "arquivos_processados",
+    mensagem:
+      "Arquivos lidos e convertidos com sucesso. Pronto para iniciar a conciliação (Rodada 1).",
+    relatorios: resultado,
+  };
+}
+
+/**
+ * Rodada 2 (dentro da API): usa a IA para gerar uma conciliação inteligente
+ * a partir dos relatórios já processados na Rodada 1.
+ *
+ * ATENÇÃO:
+ * - Aqui não lemos arquivo de novo.
+ * - Só usamos o que veio de prepararRodada1 (texto já extraído).
+ */
+export async function realizarConciliacao({
+  fornecedor,
+  relatoriosProcessados,
+  simulacao = false,
+}) {
+  const openai = getOpenAIClient();
+
+  // Se não tiver chave, não derruba a API
+  if (!openai) {
+    return {
+      fornecedor,
+      simulacao,
+      status: "erro_openai",
+      mensagem:
+        "OPENAI_API_KEY não configurada. Adicione sua chave no arquivo .env para habilitar a conciliação com IA.",
+    };
+  }
+
+  // Monta um resumo compacto dos relatórios para mandar pra IA
+  const relatoriosResumidos = {};
+
+  for (const [chave, info] of Object.entries(relatoriosProcessados || {})) {
+    const proc = info?.processado || {};
+
+    relatoriosResumidos[chave] = {
+      nomeOriginal: info?.nomeOriginal || null,
+      tipo: proc?.tipo || null,
+      tamanhoTexto: proc?.tamanhoTexto || null,
+      preview: proc?.preview || null,
+      // 🔹 Trecho do conteúdo completo (se existir)
+      trechoConteudo: proc?.conteudoTexto
+        ? String(proc.conteudoTexto).slice(0, 8000)
+        : null,
+    };
+  }
+
+  const entradaIA = {
+    fornecedor,
+    relatorios: relatoriosResumidos,
+  };
+
+  // 🔹 REGRA NOVA: checar se o fornecedor aparece na razão
+  const razaoTrecho =
+    relatoriosResumidos?.razao?.trechoConteudo ||
+    relatoriosResumidos?.razao?.preview ||
+    "";
+
+  const fornecedorNormalizado = String(fornecedor).trim().toUpperCase();
+  const razaoNormalizada = String(razaoTrecho).toUpperCase();
+
+  if (fornecedorNormalizado && razaoNormalizada) {
+    const encontrado = razaoNormalizada.includes(fornecedorNormalizado);
+
+    if (!encontrado) {
+      // 🚫 Não achou o fornecedor na razão → não chama IA
+      const estruturaJson = {
+        resumoExecutivo: `Não foram encontrados lançamentos do fornecedor "${fornecedor}" na razão enviada.`,
+        composicaoSaldo: [
+          {
+            fonte: "razao",
+            descricao:
+              "Razão de fornecedores analisada, porém o fornecedor informado não consta em nenhum lançamento.",
+            valorEstimado: 0,
+            observacoes:
+              "Verifique se o relatório de razão está filtrado corretamente para o período e empresa, ou se há erro no nome do fornecedor.",
+          },
+        ],
+        divergencias: [
+          {
+            descricao:
+              "Fornecedor informado não aparece em nenhum lançamento da razão de fornecedores.",
+            tipo: "fornecedor_sem_lancamento",
+            referencias: [
+              `Fornecedor: ${fornecedor}`,
+              "Relatório: Razão de Fornecedores",
+            ],
+            nivelCriticidade: "alta",
+          },
+        ],
+        pagamentosOrfaos: [],
+        titulosVencidosSemContrapartida: [],
+        passosRecomendados: [
+          "Conferir se o nome do fornecedor está idêntico ao cadastrado no sistema/contabilidade.",
+          "Validar se o relatório de razão foi emitido para o CNPJ correto e para o período desejado.",
+          "Caso o fornecedor realmente devesse ter lançamentos, solicitar ao responsável a emissão de um novo relatório de razão filtrado corretamente.",
+        ],
+        observacoesGerais:
+          "Como o fornecedor não foi encontrado na amostra do relatório de razão, não é possível prosseguir com a conciliação detalhada até que os relatórios estejam consistentes.",
+      };
+
+      return {
+        fornecedor,
+        simulacao,
+        status: "conciliacao_gerada",
+        modelo: "regra_local_sem_ia",
+        entradaIA: relatoriosResumidos,
+        estrutura: estruturaJson,
+        respostaBruta:
+          "Fornecedor não encontrado na razão. Diagnóstico gerado sem chamada ao modelo de IA.",
+      };
+    }
+  }
+
+  // 🔹 Se chegou aqui, segue fluxo normal com IA
+  const systemPrompt = `
+Você é um analista contábil brasileiro especialista em CONCILIAÇÃO DE FORNECEDORES.
+
+Contexto:
+- Você recebe RESUMOS de 4 relatórios: razão de fornecedores, balancete, contas a pagar e extrato de pagamentos.
+- Para cada relatório, você recebe:
+  - nomeOriginal
+  - tipo
+  - tamanhoTexto
+  - preview (primeiras linhas)
+  - trechoConteudo (primeira parte do texto real, quando disponível)
+- Os textos originais podem ser muito grandes, então você trabalha com AMOSTRAS.
+- Seu objetivo é AJUDAR o contador a enxergar divergências, composição de saldo e próximos passos.
+
+REGRAS IMPORTANTES:
+- Sempre responda em PORTUGUÊS DO BRASIL.
+- Nunca invente NF ou valores específicos se não estiverem claros nas amostras.
+- Quando os dados forem insuficientes, deixe claro no campo "observacoes".
+- Sua resposta DEVE SER SEMPRE um JSON VÁLIDO e NADA ALÉM DISSO (sem texto fora do JSON).
+
+ESTRUTURA OBRIGATÓRIA DO JSON:
+
+{
+  "resumoExecutivo": "texto curto e direto sobre a situação do fornecedor",
+  "composicaoSaldo": [
+    {
+      "fonte": "contas_pagar | balancete | razao | pagamentos | estimado",
+      "descricao": "explicação da linha",
+      "valorEstimado": 0,
+      "observacoes": "se não der para afirmar com 100% de certeza, explique aqui"
+    }
+  ],
+  "divergencias": [
+    {
+      "descricao": "explicação clara da divergência",
+      "tipo": "saldo_diferente | titulo_pago_nao_baixado | titulo_sem_pagamento | fornecedor_sem_lancamento | outro",
+      "referencias": ["ex: NF, data, conta contábil, fornecedor, banco etc."],
+      "nivelCriticidade": "baixa | media | alta"
+    }
+  ],
+  "pagamentosOrfaos": [
+    {
+      "descricao": "pagamento que aparece no extrato mas não aparece no contas a pagar ou razão",
+      "valorEstimado": 0,
+      "referencias": ["dados que ajudem a localizar no sistema"],
+      "nivelRisco": "baixo | medio | alto"
+    }
+  ],
+  "titulosVencidosSemContrapartida": [
+    {
+      "descricao": "título que aparece aberto mas sem pagamento correspondente",
+      "valorEstimado": 0,
+      "referencias": ["ex: NF, fornecedor, data de vencimento"],
+      "diasEmAtrasoEstimado": 0
+    }
+  ],
+  "passosRecomendados": [
+    "passo 1 em linguagem simples",
+    "passo 2",
+    "passo 3"
+  ],
+  "observacoesGerais": "comentários adicionais ou limitações dos dados"
+}
+`;
+
+  const userPrompt = `
+Você recebeu um resumo dos relatórios do fornecedor "${fornecedor}".
+
+Use esses dados para montar um DIAGNÓSTICO DE CONCILIAÇÃO, apontando:
+- composição de saldo,
+- divergências,
+- pagamentos órfãos,
+- títulos vencidos sem contrapartida,
+- próximos passos.
+
+DADOS DOS RELATÓRIOS (RESUMO + TRECHOS):
+${JSON.stringify(entradaIA, null, 2)}
+`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      temperature: 0.1,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    });
+
+    const rawContent = completion.choices?.[0]?.message?.content?.trim() || "";
+
+    let estruturaJson = null;
+    try {
+      estruturaJson = JSON.parse(rawContent);
+    } catch (err) {
+      console.warn(
+        "[conciliacao.service] Falha ao fazer parse do JSON da IA. Devolvendo texto bruto.",
+        err.message
+      );
+    }
+
+    return {
+      fornecedor,
+      simulacao,
+      status: estruturaJson ? "conciliacao_gerada" : "conciliacao_texto",
+      modelo: "gpt-4.1-mini",
+      entradaIA: relatoriosResumidos,
+      estrutura: estruturaJson,
+      respostaBruta: rawContent,
+    };
+  } catch (err) {
+    console.error("[conciliacao.service] Erro na chamada OpenAI:", err.message);
+    return {
+      fornecedor,
+      simulacao,
+      status: "erro_openai",
+      mensagem: "Falha ao gerar conciliação com IA. Veja logs no servidor.",
+      detalhe: err.message,
+    };
+  }
+}

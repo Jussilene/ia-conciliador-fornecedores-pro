@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>IA Conciliador de Fornecedores</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+      .badge {
+        @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <div
+      class="min-h-screen px-4 py-8 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex justify-center"
+    >
+      <main class="w-full max-w-6xl space-y-8">
+        <!-- Cabeçalho -->
+        <header class="flex flex-col gap-2">
+          <h1 class="text-2xl md:text-3xl font-semibold tracking-tight">
+            IA Conciliador de Fornecedores
+          </h1>
+          <p class="text-sm md:text-base text-slate-300 max-w-2xl">
+            Faça o upload da
+            <span class="font-semibold">Razão, Balancete, Contas a Pagar</span> e
+            <span class="font-semibold">Pagamentos</span> para um fornecedor
+            específico e receba um diagnóstico automático com divergências e
+            recomendações.
+          </p>
+        </header>
+
+        <!-- BLOCO 1 – Formulário de Upload -->
+        <section
+          class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl shadow-slate-950/40"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg md:text-xl font-semibold">
+              1. Upload dos arquivos e fornecedor
+            </h2>
+            <span
+              class="text-[11px] uppercase tracking-wide text-slate-400 font-medium"
+              >Rodada 1</span
+            >
+          </div>
+
+          <form id="conciliacaoForm" class="space-y-4">
+            <!-- Fornecedor -->
+            <div class="grid md:grid-cols-[1.2fr] gap-4">
+              <div>
+                <label
+                  for="fornecedorInput"
+                  class="block text-sm font-medium text-slate-200 mb-1"
+                  >Fornecedor</label
+                >
+                <input
+                  id="fornecedorInput"
+                  type="text"
+                  required
+                  placeholder="Ex: SANEATINS, MERCADO XYZ..."
+                  class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm md:text-base outline-none focus:ring-2 focus:ring-emerald-400/80 focus:border-emerald-400/80"
+                />
+                <p class="text-xs mt-1 text-slate-400">
+                  Use o mesmo nome que aparece na razão / contas a pagar.
+                </p>
+              </div>
+            </div>
+
+            <!-- Arquivos -->
+            <div
+              class="grid md:grid-cols-2 gap-4 border border-slate-800 rounded-xl p-3 md:p-4 bg-slate-950/50"
+            >
+              <div>
+                <label
+                  for="razaoFile"
+                  class="block text-sm font-medium text-slate-200 mb-1"
+                  >Razão de Fornecedores (PDF)</label
+                >
+                <input
+                  id="razaoFile"
+                  name="razao"
+                  type="file"
+                  accept=".pdf"
+                  required
+                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <label
+                  for="balanceteFile"
+                  class="block text-sm font-medium text-slate-200 mb-1"
+                  >Balancete de Fornecedores (PDF)</label
+                >
+                <input
+                  id="balanceteFile"
+                  name="balancete"
+                  type="file"
+                  accept=".pdf"
+                  required
+                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <label
+                  for="contasFile"
+                  class="block text-sm font-medium text-slate-200 mb-1"
+                  >Contas a Pagar (PDF)</label
+                >
+                <input
+                  id="contasFile"
+                  name="contas_pagar"
+                  type="file"
+                  accept=".pdf"
+                  required
+                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <label
+                  for="pagamentosFile"
+                  class="block text-sm font-medium text-slate-200 mb-1"
+                  >Pagamentos / Extrato Caixa (PDF)</label
+                >
+                <input
+                  id="pagamentosFile"
+                  name="pagamentos"
+                  type="file"
+                  accept=".pdf"
+                  required
+                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <!-- Botão -->
+            <div class="flex flex-wrap items-center gap-3 pt-1">
+              <button
+                id="submitBtn"
+                type="submit"
+                class="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm md:text-base font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span id="submitBtnIcon" class="text-lg">⚙️</span>
+                <span id="submitBtnText">Rodar conciliação</span>
+              </button>
+
+              <p
+                id="statusMensagem"
+                class="text-xs md:text-sm text-slate-400 italic"
+              >
+                Aguardando envio...
+              </p>
+            </div>
+          </form>
+        </section>
+
+        <!-- BLOCO 2 – Status da Conciliação -->
+        <section
+          class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl shadow-slate-950/40"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg md:text-xl font-semibold">
+              2. Status da conciliação
+            </h2>
+          </div>
+
+          <div
+            id="statusResultado"
+            class="grid md:grid-cols-4 gap-3 text-sm md:text-base"
+          >
+            <div
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-1"
+            >
+              <p class="text-xs uppercase tracking-wide text-slate-400">
+                Fornecedor
+              </p>
+              <p
+                id="statusFornecedor"
+                class="font-semibold text-slate-100 break-words"
+              >
+                —
+              </p>
+            </div>
+
+            <div
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-1"
+            >
+              <p class="text-xs uppercase tracking-wide text-slate-400">
+                Etapa
+              </p>
+              <p id="statusEtapa" class="font-semibold text-slate-100">—</p>
+            </div>
+
+            <div
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-1"
+            >
+              <p class="text-xs uppercase tracking-wide text-slate-400">
+                Status
+              </p>
+              <p id="statusConciliacao" class="font-semibold text-emerald-400">
+                —
+              </p>
+            </div>
+
+            <div
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-1"
+            >
+              <p class="text-xs uppercase tracking-wide text-slate-400">
+                Modelo / Regra
+              </p>
+              <p id="statusModelo" class="font-semibold text-slate-100">—</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- BLOCO 3 – Resumo Executivo -->
+        <section
+          class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl shadow-slate-950/40"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg md:text-xl font-semibold">
+              3. Resumo executivo
+            </h2>
+          </div>
+          <p
+            id="resumoExecutivo"
+            class="text-sm md:text-base text-slate-200 leading-relaxed"
+          >
+            Nenhuma conciliação processada ainda.
+          </p>
+        </section>
+
+        <!-- BLOCO 4 – Lista de Divergências -->
+        <section
+          class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl shadow-slate-950/40"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg md:text-xl font-semibold">
+              4. Divergências encontradas
+            </h2>
+          </div>
+
+          <div id="divergenciasContainer" class="space-y-3 text-sm md:text-base">
+            <p class="text-slate-300">
+              Ainda não há divergências listadas. Rode uma conciliação para
+              ver os detalhes aqui.
+            </p>
+          </div>
+        </section>
+
+        <!-- BLOCO 5 – Títulos vencidos e pagamentos órfãos -->
+        <section
+          class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl shadow-slate-950/40 mb-6"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg md:text-xl font-semibold">
+              5. Títulos vencidos & pagamentos órfãos
+            </h2>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4 text-sm md:text-base">
+            <!-- Títulos vencidos -->
+            <div
+              id="titulosContainer"
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+            >
+              <h3 class="font-semibold text-slate-100 mb-1">
+                Títulos vencidos sem contrapartida
+              </h3>
+              <div id="titulosConteudo" class="space-y-2 text-slate-300">
+                <p class="text-slate-400 text-sm">
+                  Nenhuma informação de títulos vencidos ainda.
+                </p>
+              </div>
+            </div>
+
+            <!-- Pagamentos órfãos -->
+            <div
+              id="pagamentosOrfaosContainer"
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+            >
+              <h3 class="font-semibold text-slate-100 mb-1">
+                Pagamentos órfãos
+              </h3>
+              <div id="pagamentosOrfaosConteudo" class="space-y-2 text-slate-300">
+                <p class="text-slate-400 text-sm">
+                  Nenhum pagamento órfão identificado ainda.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Passos recomendados / observações -->
+          <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm md:text-base">
+            <div
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+            >
+              <h3 class="font-semibold text-slate-100 mb-1">
+                Passos recomendados
+              </h3>
+              <ul
+                id="passosRecomendados"
+                class="space-y-1 text-slate-300 list-disc list-inside"
+              >
+                <li class="text-slate-400 text-sm">
+                  As recomendações da IA aparecerão aqui após a conciliação.
+                </li>
+              </ul>
+            </div>
+
+            <div
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+            >
+              <h3 class="font-semibold text-slate-100 mb-1">
+                Observações gerais
+              </h3>
+              <p
+                id="observacoesGerais"
+                class="text-slate-300 text-sm md:text-base"
+              >
+                As observações gerais sobre o fornecedor aparecerão aqui.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+      const form = document.getElementById("conciliacaoForm");
+      const submitBtn = document.getElementById("submitBtn");
+      const submitBtnText = document.getElementById("submitBtnText");
+      const submitBtnIcon = document.getElementById("submitBtnIcon");
+      const statusMensagem = document.getElementById("statusMensagem");
+
+      const statusFornecedor = document.getElementById("statusFornecedor");
+      const statusEtapa = document.getElementById("statusEtapa");
+      const statusConciliacao = document.getElementById("statusConciliacao");
+      const statusModelo = document.getElementById("statusModelo");
+
+      const resumoExecutivo = document.getElementById("resumoExecutivo");
+      const divergenciasContainer =
+        document.getElementById("divergenciasContainer");
+      const titulosConteudo = document.getElementById("titulosConteudo");
+      const pagamentosOrfaosConteudo = document.getElementById(
+        "pagamentosOrfaosConteudo"
+      );
+      const passosRecomendados = document.getElementById("passosRecomendados");
+      const observacoesGerais = document.getElementById("observacoesGerais");
+
+      function setLoading(isLoading) {
+        submitBtn.disabled = isLoading;
+        if (isLoading) {
+          submitBtnIcon.textContent = "⏳";
+          submitBtnText.textContent = "Processando conciliação...";
+          statusMensagem.textContent =
+            "Lendo PDFs, cruzando informações e gerando diagnóstico. Aguarde...";
+        } else {
+          submitBtnIcon.textContent = "⚙️";
+          submitBtnText.textContent = "Rodar conciliação";
+        }
+      }
+
+      function getBadgeClasses(nivel) {
+        const base =
+          "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium";
+        if (!nivel) return base + " bg-slate-800 text-slate-200";
+        const n = nivel.toLowerCase();
+        if (n === "alta") return base + " bg-rose-500/20 text-rose-300";
+        if (n === "media") return base + " bg-amber-500/20 text-amber-300";
+        if (n === "baixa") return base + " bg-emerald-500/20 text-emerald-300";
+        return base + " bg-slate-800 text-slate-200";
+      }
+
+      function renderResultado(data) {
+        const fornecedor = data.fornecedor || "-";
+        const etapa = data.etapa || "-";
+        const conciliacao = data.conciliacao || {};
+        const modelo = conciliacao.modelo || conciliacao.status || "-";
+        const status = conciliacao.status || "—";
+        const estrutura = conciliacao.estrutura || {};
+
+        // Bloco 2
+        statusFornecedor.textContent = fornecedor;
+        statusEtapa.textContent = etapa;
+        statusConciliacao.textContent = status;
+        statusModelo.textContent = modelo;
+
+        // Bloco 3 – Resumo
+        resumoExecutivo.textContent =
+          estrutura.resumoExecutivo ||
+          "Nenhum resumo executivo retornado para esta conciliação.";
+
+        // Bloco 4 – Divergências
+        const divergencias = estrutura.divergencias || [];
+        if (!divergencias.length) {
+          divergenciasContainer.innerHTML =
+            '<p class="text-slate-300 text-sm">Nenhuma divergência relevante foi identificada para este fornecedor.</p>';
+        } else {
+          divergenciasContainer.innerHTML = "";
+          divergencias.forEach((div, idx) => {
+            const card = document.createElement("article");
+            card.className =
+              "rounded-xl border border-slate-800 bg-slate-950/60 p-3 md:p-4 space-y-1";
+
+            const crit = div.nivelCriticidade || "";
+            const referencias = (div.referencias || []).join(" · ");
+
+            card.innerHTML = `
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <h3 class="font-semibold text-slate-100 text-sm md:text-base">
+                    Divergência ${idx + 1}
+                  </h3>
+                  <p class="text-xs text-slate-400">
+                    Tipo: <span class="font-medium text-slate-200">${
+                      div.tipo || "não informado"
+                    }</span>
+                  </p>
+                </div>
+                <span class="${getBadgeClasses(
+                  crit
+                )}">${crit || "sem nível"}</span>
+              </div>
+              <p class="text-sm md:text-[15px] text-slate-200 mt-2">
+                ${div.descricao || "-"}
+              </p>
+              ${
+                referencias
+                  ? `<p class="text-xs text-slate-400 mt-1">Referências: ${referencias}</p>`
+                  : ""
+              }
+            `;
+            divergenciasContainer.appendChild(card);
+          });
+        }
+
+        // Bloco 5 – Títulos vencidos
+        const titulos = estrutura.titulosVencidosSemContrapartida || [];
+        if (!titulos.length) {
+          titulosConteudo.innerHTML =
+            '<p class="text-slate-400 text-sm">Nenhum título vencido sem contrapartida foi identificado.</p>';
+        } else {
+          titulosConteudo.innerHTML = "";
+          titulos.forEach((t) => {
+            const item = document.createElement("div");
+            item.className =
+              "rounded-lg border border-slate-800 bg-slate-950/80 p-2.5 space-y-1";
+            item.innerHTML = `
+              <p class="text-sm text-slate-200">${t.descricao || "-"}</p>
+              <p class="text-xs text-slate-400">
+                Valor estimado: <span class="font-semibold text-emerald-300">
+                  ${
+                    typeof t.valorEstimado === "number"
+                      ? "R$ " + t.valorEstimado.toFixed(2)
+                      : "-"
+                  }
+                </span>
+              </p>
+              ${
+                t.diasEmAtrasoEstimado != null
+                  ? `<p class="text-xs text-slate-400">Dias em atraso (estimado): ${t.diasEmAtrasoEstimado}</p>`
+                  : ""
+              }
+              ${
+                (t.referencias || []).length
+                  ? `<p class="text-[11px] text-slate-500">Refs: ${(t.referencias || []).join(
+                      " · "
+                    )}</p>`
+                  : ""
+              }
+            `;
+            titulosConteudo.appendChild(item);
+          });
+        }
+
+        // Pagamentos órfãos
+        const orfaos = estrutura.pagamentosOrfaos || [];
+        if (!orfaos.length) {
+          pagamentosOrfaosConteudo.innerHTML =
+            '<p class="text-slate-400 text-sm">Nenhum pagamento órfão foi identificado.</p>';
+        } else {
+          pagamentosOrfaosConteudo.innerHTML = "";
+          orfaos.forEach((p) => {
+            const item = document.createElement("div");
+            item.className =
+              "rounded-lg border border-slate-800 bg-slate-950/80 p-2.5 space-y-1";
+            item.innerHTML = `
+              <p class="text-sm text-slate-200">${p.descricao || "-"}</p>
+              <p class="text-xs text-slate-400">
+                Valor estimado: <span class="font-semibold text-emerald-300">
+                  ${
+                    typeof p.valorEstimado === "number"
+                      ? "R$ " + p.valorEstimado.toFixed(2)
+                      : "-"
+                  }
+                </span>
+              </p>
+              ${
+                (p.referencias || []).length
+                  ? `<p class="text-[11px] text-slate-500">Refs: ${(p.referencias || []).join(
+                      " · "
+                    )}</p>`
+                  : ""
+              }
+            `;
+            pagamentosOrfaosConteudo.appendChild(item);
+          });
+        }
+
+        // Passos recomendados
+        const passos = estrutura.passosRecomendados || [];
+        if (!passos.length) {
+          passosRecomendados.innerHTML =
+            '<li class="text-slate-400 text-sm">Nenhum passo recomendado retornado para esta conciliação.</li>';
+        } else {
+          passosRecomendados.innerHTML = "";
+          passos.forEach((p) => {
+            const li = document.createElement("li");
+            li.textContent = p;
+            passosRecomendados.appendChild(li);
+          });
+        }
+
+        // Observações gerais
+        observacoesGerais.textContent =
+          estrutura.observacoesGerais ||
+          "Nenhuma observação geral retornada para esta conciliação.";
+
+        statusMensagem.textContent =
+          "Conciliação concluída com sucesso para o fornecedor " + fornecedor + ".";
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const fornecedor = document.getElementById("fornecedorInput").value;
+        const razaoFile = document.getElementById("razaoFile").files[0];
+        const balanceteFile = document.getElementById("balanceteFile").files[0];
+        const contasFile = document.getElementById("contasFile").files[0];
+        const pagamentosFile =
+          document.getElementById("pagamentosFile").files[0];
+
+        if (!fornecedor || !razaoFile || !balanceteFile || !contasFile || !pagamentosFile) {
+          alert("Preencha o fornecedor e selecione todos os arquivos obrigatórios.");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("fornecedor", fornecedor);
+        formData.append("razao", razaoFile);
+        formData.append("balancete", balanceteFile);
+        formData.append("contas_pagar", contasFile);
+        formData.append("pagamentos", pagamentosFile);
+
+        try {
+          setLoading(true);
+          const resp = await fetch("/api/fornecedores/conciliar/rodada1", {
+            method: "POST",
+            body: formData,
+          });
+
+          const contentType = resp.headers.get("content-type") || "";
+          let data;
+          if (contentType.includes("application/json")) {
+            data = await resp.json();
+          } else {
+            const text = await resp.text();
+            throw new Error("Resposta não é JSON: " + text);
+          }
+
+          if (!resp.ok) {
+            throw new Error(data.detail || data.error || "Erro ao conciliar.");
+          }
+
+          renderResultado(data);
+        } catch (err) {
+          console.error(err);
+          statusMensagem.textContent =
+            "Erro ao executar conciliação: " + err.message;
+          alert("Erro ao executar conciliação: " + err.message);
+        } finally {
+          setLoading(false);
+        }
+      });
+    </script>
+  </body>
+</html>

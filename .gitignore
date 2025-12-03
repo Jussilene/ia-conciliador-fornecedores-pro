@@ -1,0 +1,50 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# Uploads de arquivos PDF enviados pelo usuário
+uploads/
+
+# Arquivos de saída gerados (pdf, txt, excel, json...)
+outputs/
+
+# Cache
+.cache/
+.tmp/
+dist/
+build/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# VSCode configs
+.vscode/
+.history/
+
+# Render / Deploy
+.vercel/
+.netlify/
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Coverage (caso tenha testes)
+coverage/
+
+# Windows lixo
+desktop.ini
