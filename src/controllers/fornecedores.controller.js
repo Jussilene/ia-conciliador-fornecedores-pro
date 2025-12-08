@@ -1,7 +1,10 @@
 // src/controllers/fornecedores.controller.js
 import {
   prepararRodada1,
-  realizarConciliacao,
+  conciliarRodada1 as conciliarRodada1Service,
+  conciliarRodada2 as conciliarRodada2Service,
+  conciliarRodada3 as conciliarRodada3Service,
+  conciliarRodada4 as conciliarRodada4Service,
 } from "../services/conciliacao.service.js";
 
 /**
@@ -23,17 +26,19 @@ export async function uploadRelatorios(req, res) {
       balancete: req.files?.balancete?.[0] || null,
       contas_pagar: req.files?.contas_pagar?.[0] || null,
       pagamentos: req.files?.pagamentos?.[0] || null,
+      notas_fiscais: req.files?.notas_fiscais?.[0] || null,
     };
 
     if (
       !arquivos.razao &&
       !arquivos.balancete &&
       !arquivos.contas_pagar &&
-      !arquivos.pagamentos
+      !arquivos.pagamentos &&
+      !arquivos.notas_fiscais
     ) {
       return res.status(400).json({
         error:
-          "Nenhum arquivo foi enviado. Envie pelo menos um relatório (razão, balancete, contas_pagar ou pagamentos).",
+          "Nenhum arquivo foi enviado. Envie pelo menos um relatório (razão, balancete, contas_pagar, pagamentos ou notas_fiscais).",
       });
     }
 
@@ -50,13 +55,14 @@ export async function uploadRelatorios(req, res) {
 }
 
 /**
- * Endpoint completo da Rodada 1:
- * - Faz o upload + leitura (mesmo que o /upload)
- * - Em seguida chama a IA para montar a conciliação inicial
+ * Endpoint completo de conciliação:
+ * - Faz o upload + leitura (prepararRodada1)
+ * - Em seguida chama a IA para montar a conciliação
+ * - Suporta Rodada 1, 2, 3 e 4 (Notas Fiscais)
  */
 export async function conciliarRodada1(req, res) {
   try {
-    const { fornecedor } = req.body || {};
+    const { fornecedor, rodada } = req.body || {};
 
     if (!fornecedor) {
       return res.status(400).json({
@@ -69,41 +75,68 @@ export async function conciliarRodada1(req, res) {
       balancete: req.files?.balancete?.[0] || null,
       contas_pagar: req.files?.contas_pagar?.[0] || null,
       pagamentos: req.files?.pagamentos?.[0] || null,
+      notas_fiscais: req.files?.notas_fiscais?.[0] || null,
     };
 
     if (
       !arquivos.razao &&
       !arquivos.balancete &&
       !arquivos.contas_pagar &&
-      !arquivos.pagamentos
+      !arquivos.pagamentos &&
+      !arquivos.notas_fiscais
     ) {
       return res.status(400).json({
         error:
-          "Nenhum arquivo foi enviado. Envie pelo menos um relatório (razão, balancete, contas_pagar ou pagamentos).",
+          "Nenhum arquivo foi enviado. Envie pelo menos um relatório (razão, balancete, contas_pagar, pagamentos ou notas_fiscais).",
       });
     }
 
-    // 1) Processa os arquivos (Rodada 1)
-    const etapaUpload = await prepararRodada1({ fornecedor, arquivos });
+    // 🔹 Normaliza a rodada (fallback = rodada1)
+    const rodadaSelecionada = (rodada || "rodada1")
+      .toString()
+      .trim()
+      .toLowerCase();
 
-    // 2) Chama a IA passando os relatórios já processados
-    const conciliacao = await realizarConciliacao({
-      fornecedor,
-      relatoriosProcessados: etapaUpload.relatorios,
-      simulacao: false,
-    });
+    let resultado;
 
-    // 3) Resposta combinando as duas etapas
+    if (rodadaSelecionada === "rodada2") {
+      // Fornecedor estratégico (versão PRO)
+      resultado = await conciliarRodada2Service({
+        fornecedor,
+        arquivos,
+        simulacao: false,
+      });
+    } else if (rodadaSelecionada === "rodada3") {
+      // Auditoria mensal (versão PRO)
+      resultado = await conciliarRodada3Service({
+        fornecedor,
+        arquivos,
+        simulacao: false,
+      });
+    } else if (rodadaSelecionada === "rodada4") {
+      // Cruzamento com Notas Fiscais (versão PRO)
+      resultado = await conciliarRodada4Service({
+        fornecedor,
+        arquivos,
+        simulacao: false,
+      });
+    } else {
+      // Conciliação padrão (Rodada 1)
+      resultado = await conciliarRodada1Service({
+        fornecedor,
+        arquivos,
+        simulacao: false,
+      });
+    }
+
     return res.status(200).json({
-      fornecedor,
-      etapa: "rodada1",
-      uploadProcessado: etapaUpload,
-      conciliacao,
+      ...resultado,
+      rodada: rodadaSelecionada,
     });
   } catch (err) {
     console.error("[controllers/fornecedores] Erro em conciliarRodada1:", err);
     return res.status(500).json({
-      error: "Erro interno ao executar conciliação (Rodada 1).",
+      error: "Erro interno ao executar conciliação.",
       detalhe: err.message,
     });
   }

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>IA Conciliador de Fornecedores</title>
+    <title>IA Conciliador de Fornecedores PRO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Tailwind via CDN -->
@@ -28,13 +28,16 @@
         <header class="flex flex-col gap-2">
           <h1 class="text-2xl md:text-3xl font-semibold tracking-tight">
             IA Conciliador de Fornecedores
+            <span class="text-emerald-400">PRO</span>
           </h1>
           <p class="text-sm md:text-base text-slate-300 max-w-2xl">
             Faça o upload da
             <span class="font-semibold">Razão, Balancete, Contas a Pagar</span> e
             <span class="font-semibold">Pagamentos</span> para um fornecedor
             específico e receba um diagnóstico automático com divergências e
-            recomendações.
+            recomendações. Na
+            <span class="font-semibold">Rodada 4</span> você também cruza com as
+            <span class="font-semibold">Notas Fiscais</span>.
           </p>
         </header>
 
@@ -46,12 +49,11 @@
             <h2 class="text-lg md:text-xl font-semibold">
               1. Upload dos arquivos e fornecedor
             </h2>
-          
           </div>
 
           <form id="conciliacaoForm" class="space-y-4">
-            <!-- Fornecedor -->
-            <div class="grid md:grid-cols-[1.2fr] gap-4">
+            <!-- Fornecedor + Tipo de conciliação -->
+            <div class="grid md:grid-cols-2 gap-4">
               <div>
                 <label
                   for="fornecedorInput"
@@ -67,6 +69,38 @@
                 />
                 <p class="text-xs mt-1 text-slate-400">
                   Use o mesmo nome que aparece na razão / contas a pagar.
+                </p>
+              </div>
+
+              <div>
+                <label
+                  for="tipoConcilicacao"
+                  class="block text-sm font-medium text-slate-200 mb-1"
+                  >Tipo de conciliação</label
+                >
+                <select
+                  id="tipoConcilicacao"
+                  class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm md:text-base outline-none focus:ring-2 focus:ring-emerald-400/80 focus:border-emerald-400/80"
+                >
+                  <option value="rodada1">Conciliação padrão (Rodada 1)</option>
+                  <option value="rodada2">
+                    Fornecedor estratégico (Rodada 2)
+                  </option>
+                  <option value="rodada3">
+                    Auditoria mensal (Rodada 3)
+                  </option>
+                  <option value="rodada4">
+                    Notas fiscais cruzadas (Rodada 4)
+                  </option>
+                </select>
+                <p class="text-xs mt-1 text-slate-400">
+                  Selecione
+                  <span class="font-semibold">Fornecedor estratégico</span> para
+                  aplicar regras mais rígidas (Rodada 2),
+                  <span class="font-semibold">Auditoria mensal</span> para uma
+                  visão consolidada do mês (Rodada 3) ou
+                  <span class="font-semibold">Notas fiscais cruzadas</span> para
+                  comparar NFs com títulos, razão e pagamentos (Rodada 4).
                 </p>
               </div>
             </div>
@@ -103,7 +137,8 @@
                   type="file"
                   accept=".pdf"
                   required
-                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
+                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-9
+00 hover:file:bg-emerald-400 cursor-pointer"
                 />
               </div>
 
@@ -137,6 +172,29 @@
                   required
                   class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
                 />
+              </div>
+
+              <!-- Notas Fiscais (só aparece na Rodada 4) -->
+              <div
+                id="notasFiscaisWrapper"
+                class="md:col-span-2 hidden"
+              >
+                <label
+                  for="notasFiscaisFile"
+                  class="block text-sm font-medium text-slate-200 mb-1"
+                  >Notas Fiscais (PDF/CSV) – obrigatório na Rodada 4</label
+                >
+                <input
+                  id="notasFiscaisFile"
+                  name="notas_fiscais"
+                  type="file"
+                  accept=".pdf,.csv"
+                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
+                />
+                <p class="text-xs mt-1 text-slate-400">
+                  Na Rodada 4 este arquivo é obrigatório. Nas demais rodadas é
+                  opcional.
+                </p>
               </div>
             </div>
 
@@ -218,6 +276,46 @@
               <p id="statusModelo" class="font-semibold text-slate-100">—</p>
             </div>
           </div>
+
+          <!-- Card: Fornecedor estratégico + CNPJs/CPFs -->
+          <div
+            id="cardFornecedorEstrategico"
+            class="mt-4 rounded-xl border border-emerald-700/60 bg-emerald-950/40 p-3 md:p-4 text-sm md:text-base hidden"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="text-xs uppercase tracking-wide text-emerald-300">
+                  Fornecedor estratégico
+                </p>
+                <p class="text-sm md:text-base text-emerald-100">
+                  Análise com regras reforçadas de severidade para este
+                  fornecedor.
+                </p>
+              </div>
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/20 text-emerald-100"
+              >
+                PRO
+              </span>
+            </div>
+            <div
+              id="identificadoresConteudo"
+              class="mt-2 text-xs md:text-sm text-emerald-100 space-y-1"
+            ></div>
+          </div>
+
+          <!-- Alerta de risco elevado -->
+          <div
+            id="alertaRisco"
+            class="mt-3 rounded-xl border border-rose-600/70 bg-rose-950/40 p-3 md:p-4 text-sm md:text-base hidden"
+          >
+            <div class="flex items-start gap-2">
+              <span class="text-lg">⚠️</span>
+              <p id="alertaRiscoTexto" class="text-rose-100">
+                <!-- preenchido via JS -->
+              </p>
+            </div>
+          </div>
         </section>
 
         <!-- BLOCO 3 – Resumo Executivo -->
@@ -249,15 +347,33 @@
 
           <div id="divergenciasContainer" class="space-y-3 text-sm md:text-base">
             <p class="text-slate-300">
-              Ainda não há divergências listadas. Rode uma conciliação para
-              ver os detalhes aqui.
+              Ainda não há divergências listadas. Rode uma conciliação para ver
+              os detalhes aqui.
             </p>
+          </div>
+
+          <!-- Sub-bloco: Divergências específicas de Notas Fiscais -->
+          <div
+            class="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+          >
+            <h3 class="font-semibold text-slate-100 mb-1">
+              Notas fiscais – divergências específicas (Rodada 4)
+            </h3>
+            <div
+              id="divergenciasNotasFiscaisConteudo"
+              class="space-y-2 text-slate-300 text-sm md:text-base"
+            >
+              <p class="text-slate-400 text-sm">
+                As divergências específicas de notas fiscais aparecerão aqui
+                quando você utilizar a Rodada 4.
+              </p>
+            </div>
           </div>
         </section>
 
         <!-- BLOCO 5 – Títulos vencidos e pagamentos órfãos -->
         <section
-          class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl shadow-slate-950/40 mb-6"
+          class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl shadow-slate-950/40"
         >
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-lg md:text-xl font-semibold">
@@ -291,7 +407,7 @@
               </h3>
               <div id="pagamentosOrfaosConteudo" class="space-y-2 text-slate-300">
                 <p class="text-slate-400 text-sm">
-                  Nenhum pagamento órfão identificado ainda.
+                  Nenhum pagamento órfão foi identificado.
                 </p>
               </div>
             </div>
@@ -330,6 +446,94 @@
             </div>
           </div>
         </section>
+
+        <!-- BLOCO 6 – Resumo da auditoria mensal (Rodada 3) -->
+        <section
+          id="blocoAuditoriaMensal"
+          class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl shadow-slate-950/40 mb-6 hidden"
+        >
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg md:text-xl font-semibold">
+              6. Resumo da auditoria mensal
+            </h2>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4 text-sm md:text-base">
+            <!-- Totais mensais -->
+            <div
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+            >
+              <h3 class="font-semibold text-slate-100 mb-1">
+                Visão consolidada do mês
+              </h3>
+              <ul class="space-y-1 text-slate-300">
+                <li>
+                  Lançamentos na razão:
+                  <span
+                    id="resumoMensalLancamentosRazao"
+                    class="font-semibold text-emerald-300"
+                    >—</span
+                  >
+                </li>
+                <li>
+                  Títulos no contas a pagar:
+                  <span
+                    id="resumoMensalTitulosContasPagar"
+                    class="font-semibold text-emerald-300"
+                    >—</span
+                  >
+                </li>
+                <li>
+                  Movimentos de pagamento:
+                  <span
+                    id="resumoMensalTotalPagamentos"
+                    class="font-semibold text-emerald-300"
+                    >—</span
+                  >
+                </li>
+                <li>
+                  Total de divergências:
+                  <span
+                    id="resumoMensalTotalDivergencias"
+                    class="font-semibold text-emerald-300"
+                    >—</span
+                  >
+                </li>
+              </ul>
+            </div>
+
+            <!-- Divergências por tipo -->
+            <div
+              class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-2"
+            >
+              <h3 class="font-semibold text-slate-100 mb-1">
+                Divergências por tipo
+              </h3>
+              <div
+                id="divergenciasPorTipoConteudo"
+                class="space-y-1 text-slate-300"
+              >
+                <p class="text-slate-400 text-sm">
+                  Ainda não há dados de auditoria mensal. Rode a Rodada 3 para
+                  ver o consolidado.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comentário da auditoria -->
+          <div
+            class="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-3 md:p-4 space-y-2 text-sm md:text-base"
+          >
+            <h3 class="font-semibold text-slate-100 mb-1">
+              Parecer da auditoria
+            </h3>
+            <p id="comentarioAuditoria" class="text-slate-300">
+              Nenhum parecer mensal gerado ainda. Utilize a opção "Auditoria
+              mensal (Rodada 3)" para consolidar o mês.
+            </p>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -346,15 +550,58 @@
       const statusConciliacao = document.getElementById("statusConciliacao");
       const statusModelo = document.getElementById("statusModelo");
 
+      const cardFornecedorEstrategico = document.getElementById(
+        "cardFornecedorEstrategico"
+      );
+      const identificadoresConteudo = document.getElementById(
+        "identificadoresConteudo"
+      );
+      const alertaRisco = document.getElementById("alertaRisco");
+      const alertaRiscoTexto = document.getElementById("alertaRiscoTexto");
+
       const resumoExecutivo = document.getElementById("resumoExecutivo");
       const divergenciasContainer =
         document.getElementById("divergenciasContainer");
+      const divergenciasNotasFiscaisConteudo = document.getElementById(
+        "divergenciasNotasFiscaisConteudo"
+      );
       const titulosConteudo = document.getElementById("titulosConteudo");
       const pagamentosOrfaosConteudo = document.getElementById(
         "pagamentosOrfaosConteudo"
       );
       const passosRecomendados = document.getElementById("passosRecomendados");
       const observacoesGerais = document.getElementById("observacoesGerais");
+
+      // Elementos da auditoria mensal (Rodada 3)
+      const resumoMensalLancamentosRazao = document.getElementById(
+        "resumoMensalLancamentosRazao"
+      );
+      const resumoMensalTitulosContasPagar = document.getElementById(
+        "resumoMensalTitulosContasPagar"
+      );
+      const resumoMensalTotalPagamentos = document.getElementById(
+        "resumoMensalTotalPagamentos"
+      );
+      const resumoMensalTotalDivergencias = document.getElementById(
+        "resumoMensalTotalDivergencias"
+      );
+      const divergenciasPorTipoConteudo = document.getElementById(
+        "divergenciasPorTipoConteudo"
+      );
+      const comentarioAuditoria = document.getElementById("comentarioAuditoria");
+      const blocoAuditoriaMensal = document.getElementById(
+        "blocoAuditoriaMensal"
+      );
+
+      // Rodada / NF
+      const tipoConcilicacao = document.getElementById("tipoConcilicacao");
+      const notasFiscaisWrapper = document.getElementById(
+        "notasFiscaisWrapper"
+      );
+      const notasFiscaisInput = document.getElementById("notasFiscaisFile");
+
+      // 🔹 Guarda a última rodada selecionada (1, 2, 3 ou 4)
+      let ultimaRodadaSelecionada = "rodada1";
 
       function setLoading(isLoading) {
         submitBtn.disabled = isLoading;
@@ -380,26 +627,120 @@
         return base + " bg-slate-800 text-slate-200";
       }
 
+      function formatCurrency(valor) {
+        if (typeof valor !== "number" || isNaN(valor)) return "-";
+        return "R$ " + valor.toFixed(2);
+      }
+
+      function atualizarVisibilidadeNotasFiscais() {
+        const rodada = tipoConcilicacao.value;
+        if (rodada === "rodada4") {
+          notasFiscaisWrapper.classList.remove("hidden");
+          notasFiscaisInput.required = true;
+        } else {
+          notasFiscaisWrapper.classList.add("hidden");
+          notasFiscaisInput.required = false;
+        }
+      }
+
+      // já configura ao carregar
+      atualizarVisibilidadeNotasFiscais();
+      tipoConcilicacao.addEventListener("change", atualizarVisibilidadeNotasFiscais);
+
       function renderResultado(data) {
+        console.log("🔎 RESPOSTA DA API:", data);
+
         const fornecedor = data.fornecedor || "-";
-        const etapa = data.etapa || "-";
+
+        // 🔹 Objeto principal de conciliação e estrutura
         const conciliacao = data.conciliacao || {};
+        const estrutura = conciliacao.estrutura || {};
+
+        console.log("🔎 ESTRUTURA:", estrutura);
+
+        // ✅ Etapa vinda do backend (para exibição)
+        let etapaBruta =
+          data.rodada ||
+          data.etapa ||
+          ultimaRodadaSelecionada ||
+          "rodada1";
+
+        if (!["rodada1", "rodada2", "rodada3", "rodada4"].includes(etapaBruta)) {
+          etapaBruta = ultimaRodadaSelecionada || "rodada1";
+        }
+
+        const perfilFornecedor =
+          conciliacao.perfilFornecedor ||
+          data.perfilFornecedor ||
+          estrutura.perfilFornecedor ||
+          "";
+
+        let etapaLabel;
+        if (etapaBruta === "rodada1") {
+          etapaLabel = "rodada1";
+        } else if (etapaBruta === "rodada2") {
+          etapaLabel = "rodada2 (estrategico)";
+        } else if (etapaBruta === "rodada3") {
+          etapaLabel = "rodada3 (auditoria mensal)";
+        } else if (etapaBruta === "rodada4") {
+          etapaLabel = "rodada4 (notas fiscais)";
+        } else {
+          etapaLabel = etapaBruta || "-";
+        }
+
         const modelo = conciliacao.modelo || conciliacao.status || "-";
         const status = conciliacao.status || "—";
-        const estrutura = conciliacao.estrutura || {};
+
+        const etapaFinal = etapaLabel;
 
         // Bloco 2
         statusFornecedor.textContent = fornecedor;
-        statusEtapa.textContent = etapa;
+        statusEtapa.textContent = etapaFinal || "-";
         statusConciliacao.textContent = status;
         statusModelo.textContent = modelo;
+
+        // Sempre LIMPA antes de preencher o novo
+        cardFornecedorEstrategico.classList.add("hidden");
+        identificadoresConteudo.innerHTML = "";
+
+        // Coleta os identificadores enviados pelo backend
+        const identificadores = estrutura.identificadoresFornecedor || {};
+        const cnpjs = Array.isArray(identificadores.cnpjs)
+          ? identificadores.cnpjs
+          : [];
+        const cpfs = Array.isArray(identificadores.cpfs)
+          ? identificadores.cpfs
+          : [];
+
+        const temIdentificadores = cnpjs.length > 0 || cpfs.length > 0;
+
+        // Exibe somente se perfil = estratégico E houver CNPJ/CPF no relatório
+        if (perfilFornecedor === "estrategico" && temIdentificadores) {
+          cardFornecedorEstrategico.classList.remove("hidden");
+
+          let html = "";
+
+          if (cnpjs.length) {
+            html += `<p><span class="font-semibold">CNPJ(s) encontrados nos relatórios:</span> ${cnpjs.join(
+              " · "
+            )}</p>`;
+          }
+
+          if (cpfs.length) {
+            html += `<p><span class="font-semibold">CPF(s) relacionados:</span> ${cpfs.join(
+              " · "
+            )}</p>`;
+          }
+
+          identificadoresConteudo.innerHTML = html;
+        }
 
         // Bloco 3 – Resumo
         resumoExecutivo.textContent =
           estrutura.resumoExecutivo ||
           "Nenhum resumo executivo retornado para esta conciliação.";
 
-        // Bloco 4 – Divergências
+        // Bloco 4 – Divergências gerais
         const divergencias = estrutura.divergencias || [];
         if (!divergencias.length) {
           divergenciasContainer.innerHTML =
@@ -413,6 +754,10 @@
 
             const crit = div.nivelCriticidade || "";
             const referencias = (div.referencias || []).join(" · ");
+            const valorTexto =
+              typeof div.valorEstimado === "number"
+                ? formatCurrency(div.valorEstimado)
+                : null;
 
             card.innerHTML = `
               <div class="flex items-start justify-between gap-2">
@@ -425,6 +770,14 @@
                       div.tipo || "não informado"
                     }</span>
                   </p>
+                  ${
+                    valorTexto
+                      ? `<p class="text-xs text-slate-400">
+                           Valor estimado em risco:
+                           <span class="font-semibold text-emerald-300">${valorTexto}</span>
+                         </p>`
+                      : ""
+                  }
                 </div>
                 <span class="${getBadgeClasses(
                   crit
@@ -443,6 +796,66 @@
           });
         }
 
+        // Sub-bloco – Divergências de Notas Fiscais
+        const divergenciasNF =
+          estrutura.divergenciasNotasFiscais ||
+          conciliacao.divergenciasNotasFiscais ||
+          data.divergenciasNotasFiscais ||
+          [];
+
+        if (!divergenciasNF.length) {
+          if (etapaBruta === "rodada4") {
+            divergenciasNotasFiscaisConteudo.innerHTML =
+              '<p class="text-slate-400 text-sm">Nenhuma divergência específica de notas fiscais foi identificada para este fornecedor.</p>';
+          } else {
+            divergenciasNotasFiscaisConteudo.innerHTML =
+              '<p class="text-slate-400 text-sm">As divergências específicas de notas fiscais aparecem somente quando você roda a Rodada 4.</p>';
+          }
+        } else {
+          divergenciasNotasFiscaisConteudo.innerHTML = "";
+          divergenciasNF.forEach((nf, idx) => {
+            const item = document.createElement("article");
+            item.className =
+              "rounded-lg border border-slate-800 bg-slate-950/80 p-2.5 space-y-1";
+
+            const valorTexto =
+              typeof nf.valor === "number" ? formatCurrency(nf.valor) : "-";
+
+            item.innerHTML = `
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <p class="text-xs text-slate-400">
+                    Tipo: <span class="font-medium text-slate-200">${
+                      nf.tipo || "-"
+                    }</span>
+                  </p>
+                  <p class="text-xs text-slate-400">
+                    NF: <span class="font-semibold text-emerald-300">${
+                      nf.nota || "-"
+                    }</span>
+                  </p>
+                  <p class="text-xs text-slate-400">
+                    Valor (quando informado): <span class="font-semibold text-emerald-300">${valorTexto}</span>
+                  </p>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-800 text-slate-200">
+                  NF #${idx + 1}
+                </span>
+              </div>
+              <p class="text-sm text-slate-200">
+                ${nf.detalhe || "-"}
+              </p>
+              ${
+                nf.contexto
+                  ? `<p class="text-[11px] text-slate-500">Contexto: ${nf.contexto}</p>`
+                  : ""
+              }
+            `;
+
+            divergenciasNotasFiscaisConteudo.appendChild(item);
+          });
+        }
+
         // Bloco 5 – Títulos vencidos
         const titulos = estrutura.titulosVencidosSemContrapartida || [];
         if (!titulos.length) {
@@ -458,11 +871,7 @@
               <p class="text-sm text-slate-200">${t.descricao || "-"}</p>
               <p class="text-xs text-slate-400">
                 Valor estimado: <span class="font-semibold text-emerald-300">
-                  ${
-                    typeof t.valorEstimado === "number"
-                      ? "R$ " + t.valorEstimado.toFixed(2)
-                      : "-"
-                  }
+                  ${formatCurrency(t.valorEstimado)}
                 </span>
               </p>
               ${
@@ -497,11 +906,7 @@
               <p class="text-sm text-slate-200">${p.descricao || "-"}</p>
               <p class="text-xs text-slate-400">
                 Valor estimado: <span class="font-semibold text-emerald-300">
-                  ${
-                    typeof p.valorEstimado === "number"
-                      ? "R$ " + p.valorEstimado.toFixed(2)
-                      : "-"
-                  }
+                  ${formatCurrency(p.valorEstimado)}
                 </span>
               </p>
               ${
@@ -535,31 +940,182 @@
           estrutura.observacoesGerais ||
           "Nenhuma observação geral retornada para esta conciliação.";
 
+        // 🚨 Cálculo de risco agregado (visual PRO)
+        let totalRisco = 0;
+
+        function somaValor(v) {
+          if (typeof v === "number" && !isNaN(v)) {
+            totalRisco += v;
+          }
+        }
+
+        divergencias.forEach((d) => somaValor(d.valorEstimado));
+        orfaos.forEach((p) => somaValor(p.valorEstimado));
+        titulos.forEach((t) => somaValor(t.valorEstimado));
+        // divergências de NF normalmente são qualitativas, mas se tiver valor, soma também
+        divergenciasNF.forEach((nf) => somaValor(nf.valor || nf.valorEstimado));
+
+        const qtdAlta = divergencias.filter(
+          (d) =>
+            (d.nivelCriticidade || "").toString().toLowerCase() === "alta"
+        ).length;
+
+        const LIMITE_RISCO = 50000; // R$ 50k
+
+        if (qtdAlta >= 3 || totalRisco > LIMITE_RISCO) {
+          alertaRisco.classList.remove("hidden");
+          alertaRiscoTexto.textContent =
+            "Risco elevado identificado para este fornecedor: " +
+            `${qtdAlta} divergência(s) de criticidade alta ` +
+            `e valor estimado em risco de aproximadamente ${formatCurrency(
+              totalRisco
+            )}. ` +
+            "Priorize a análise e os ajustes deste caso.";
+        } else {
+          alertaRisco.classList.add("hidden");
+          alertaRiscoTexto.textContent = "";
+        }
+
+        // 🔹 Bloco 6 – Auditoria mensal
+        // Usa combinação: backend dizendo que é rodada3 E front selecionado em rodada3
+        const rodadaFront =
+          ultimaRodadaSelecionada || tipoConcilicacao.value || "rodada1";
+
+        const deveMostrarAuditoria =
+          (etapaBruta === "rodada3" || etapaBruta === "auditoria_mensal") &&
+          rodadaFront === "rodada3";
+
+        if (deveMostrarAuditoria) {
+          blocoAuditoriaMensal.classList.remove("hidden");
+
+          const resumoMensal =
+            estrutura.resumoMensal ||
+            conciliacao.resumoMensal ||
+            data.resumoMensal ||
+            null;
+
+          const divergenciasPorTipo =
+            estrutura.divergenciasPorTipo ||
+            conciliacao.divergenciasPorTipo ||
+            data.divergenciasPorTipo ||
+            [];
+
+          const comentario =
+            estrutura.comentarioAuditoria ||
+            conciliacao.comentarioAuditoria ||
+            data.comentarioAuditoria ||
+            "";
+
+          console.log("🔎 Resumo mensal:", resumoMensal);
+          console.log("🔎 Divergências por tipo:", divergenciasPorTipo);
+          console.log("🔎 Comentário auditoria:", comentario);
+
+          if (resumoMensal) {
+            resumoMensalLancamentosRazao.textContent =
+              resumoMensal.totalLancamentosRazao ?? 0;
+            resumoMensalTitulosContasPagar.textContent =
+              resumoMensal.totalTitulosContasPagar ?? 0;
+            resumoMensalTotalPagamentos.textContent =
+              resumoMensal.totalPagamentos ?? 0;
+            resumoMensalTotalDivergencias.textContent =
+              resumoMensal.totalDivergencias ?? 0;
+          } else {
+            resumoMensalLancamentosRazao.textContent = "—";
+            resumoMensalTitulosContasPagar.textContent = "—";
+            resumoMensalTotalPagamentos.textContent = "—";
+            resumoMensalTotalDivergencias.textContent = "—";
+          }
+
+          if (divergenciasPorTipo.length) {
+            divergenciasPorTipoConteudo.innerHTML = "";
+            divergenciasPorTipo.forEach((item) => {
+              const row = document.createElement("div");
+              row.className =
+                "flex items-center justify-between text-xs md:text-sm border border-slate-800/80 rounded-lg px-2 py-1.5 bg-slate-950/70";
+              row.innerHTML = `
+                <span class="text-slate-200">${item.tipo}</span>
+                <span class="text-slate-300">
+                  ${item.quantidade} divergência(s) ·
+                  <span class="font-semibold text-emerald-300">
+                    ${formatCurrency(item.valorEstimado)}
+                  </span>
+                </span>
+              `;
+              divergenciasPorTipoConteudo.appendChild(row);
+            });
+          } else {
+            divergenciasPorTipoConteudo.innerHTML =
+              '<p class="text-slate-400 text-sm">Ainda não há dados de auditoria mensal. Rode a Rodada 3 para ver o consolidado.</p>';
+          }
+
+          if (comentario) {
+            comentarioAuditoria.textContent = comentario;
+          } else {
+            comentarioAuditoria.textContent =
+              'Nenhum parecer mensal gerado ainda. Utilize a opção "Auditoria mensal (Rodada 3)" para consolidar o mês.';
+          }
+        } else {
+          // 👉 Demais rodadas (1, 2 e 4): esconde completamente o bloco 6
+          blocoAuditoriaMensal.classList.add("hidden");
+
+          // Limpa/zera o conteúdo para não ficar "resto" visual
+          resumoMensalLancamentosRazao.textContent = "—";
+          resumoMensalTitulosContasPagar.textContent = "—";
+          resumoMensalTotalPagamentos.textContent = "—";
+          resumoMensalTotalDivergencias.textContent = "—";
+          divergenciasPorTipoConteudo.innerHTML =
+            '<p class="text-slate-400 text-sm">Este resumo é exclusivo da Auditoria mensal (Rodada 3).</p>';
+          comentarioAuditoria.textContent =
+            'Resumo mensal desativado para esta rodada. Use "Auditoria mensal (Rodada 3)" para gerar o consolidado.';
+        }
+
         statusMensagem.textContent =
-          "Conciliação concluída com sucesso para o fornecedor " + fornecedor + ".";
+          "Conciliação concluída com sucesso para o fornecedor " +
+          fornecedor +
+          ".";
       }
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
         const fornecedor = document.getElementById("fornecedorInput").value;
+        const tipoSelecionado =
+          document.getElementById("tipoConcilicacao").value || "rodada1";
         const razaoFile = document.getElementById("razaoFile").files[0];
         const balanceteFile = document.getElementById("balanceteFile").files[0];
         const contasFile = document.getElementById("contasFile").files[0];
         const pagamentosFile =
           document.getElementById("pagamentosFile").files[0];
+        const notasFiscaisFile =
+          document.getElementById("notasFiscaisFile").files[0];
 
-        if (!fornecedor || !razaoFile || !balanceteFile || !contasFile || !pagamentosFile) {
-          alert("Preencha o fornecedor e selecione todos os arquivos obrigatórios.");
+        if (
+          !fornecedor ||
+          !razaoFile ||
+          !balanceteFile ||
+          !contasFile ||
+          !pagamentosFile ||
+          (tipoSelecionado === "rodada4" && !notasFiscaisFile)
+        ) {
+          alert(
+            "Preencha o fornecedor, selecione os arquivos obrigatórios e, na Rodada 4, informe também o arquivo de Notas Fiscais."
+          );
           return;
         }
 
+        // guarda a última rodada escolhida
+        ultimaRodadaSelecionada = tipoSelecionado;
+
         const formData = new FormData();
         formData.append("fornecedor", fornecedor);
+        formData.append("rodada", tipoSelecionado);
         formData.append("razao", razaoFile);
         formData.append("balancete", balanceteFile);
         formData.append("contas_pagar", contasFile);
         formData.append("pagamentos", pagamentosFile);
+        if (notasFiscaisFile) {
+          formData.append("notas_fiscais", notasFiscaisFile);
+        }
 
         try {
           setLoading(true);

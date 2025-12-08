@@ -3,10 +3,12 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
+
+// 👉 Aqui usamos os CONTROLLERS, que já tratam rodada1, rodada2, rodada3 e rodada4
 import {
-  prepararRodada1,
-  realizarConciliacao,
-} from "../services/conciliacao.service.js";
+  uploadRelatorios as uploadRelatoriosController,
+  conciliarRodada1 as conciliarRodadaController,
+} from "../controllers/fornecedores.controller.js";
 
 const router = Router();
 
@@ -29,7 +31,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ----- ROTA 1: upload simples -----
+/**
+ * ROTA 1: /api/fornecedores/upload
+ * Apenas processa os arquivos (Rodada 1 = pré-processamento)
+ *
+ * 👉 Usa o controller.uploadRelatorios, que por sua vez chama prepararRodada1
+ */
 router.post(
   "/upload",
   upload.fields([
@@ -37,32 +44,22 @@ router.post(
     { name: "balancete", maxCount: 1 },
     { name: "contas_pagar", maxCount: 1 },
     { name: "pagamentos", maxCount: 1 },
+    { name: "notas_fiscais", maxCount: 1 },
   ]),
-  async (req, res) => {
-    try {
-      const fornecedor = req.body.fornecedor || "FORNECEDOR_NAO_INFORMADO";
-
-      const arquivos = {
-        razao: req.files?.razao?.[0] || null,
-        balancete: req.files?.balancete?.[0] || null,
-        contas_pagar: req.files?.contas_pagar?.[0] || null,
-        pagamentos: req.files?.pagamentos?.[0] || null,
-      };
-
-      const resultado = await prepararRodada1({ fornecedor, arquivos });
-
-      return res.json(resultado);
-    } catch (err) {
-      console.error("[routes/upload] Erro:", err.message);
-      return res.status(500).json({
-        error: "Erro ao processar upload.",
-        detail: err.message,
-      });
-    }
-  }
+  uploadRelatoriosController
 );
 
-// ----- ROTA 2: conciliação + IA (Rodada 1 completa) -----
+/**
+ * ROTA 2: /api/fornecedores/conciliar/rodada1
+ * Faz o upload + conciliação com IA.
+ *
+ * 👉 Agora quem decide se é Rodada 1, 2, 3 ou 4 é o controller.conciliarRodada1,
+ *    que já tem o switch:
+ *      - rodada1  -> conciliarRodada1Service
+ *      - rodada2  -> conciliarRodada2Service
+ *      - rodada3  -> conciliarRodada3Service
+ *      - rodada4  -> conciliarRodada4Service  ✅
+ */
 router.post(
   "/conciliar/rodada1",
   upload.fields([
@@ -70,43 +67,9 @@ router.post(
     { name: "balancete", maxCount: 1 },
     { name: "contas_pagar", maxCount: 1 },
     { name: "pagamentos", maxCount: 1 },
+    { name: "notas_fiscais", maxCount: 1 },
   ]),
-  async (req, res) => {
-    try {
-      const fornecedor = req.body.fornecedor || "FORNECEDOR_NAO_INFORMADO";
-
-      const arquivos = {
-        razao: req.files?.razao?.[0] || null,
-        balancete: req.files?.balancete?.[0] || null,
-        contas_pagar: req.files?.contas_pagar?.[0] || null,
-        pagamentos: req.files?.pagamentos?.[0] || null,
-      };
-
-      // Rodada 1: leitura + normalização
-      const uploadProcessado = await prepararRodada1({ fornecedor, arquivos });
-
-      // Rodada 2: conciliação com IA
-      // 🔹 AJUSTE IMPORTANTE: passar relatoriosProcessados corretamente
-      const conciliacao = await realizarConciliacao({
-        fornecedor,
-        relatoriosProcessados: uploadProcessado.relatorios,
-        simulacao: false,
-      });
-
-      return res.json({
-        fornecedor,
-        etapa: "rodada1",
-        uploadProcessado,
-        conciliacao,
-      });
-    } catch (err) {
-      console.error("[routes/conciliar/rodada1] Erro:", err.message);
-      return res.status(500).json({
-        error: "Erro ao executar conciliação (Rodada 1 + IA).",
-        detail: err.message,
-      });
-    }
-  }
+  conciliarRodadaController
 );
 
 export default router;
