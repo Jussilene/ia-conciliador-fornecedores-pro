@@ -39,6 +39,11 @@
             <span class="font-semibold">Rodada 4</span> você também cruza com as
             <span class="font-semibold">Notas Fiscais</span>.
           </p>
+
+          <!-- 👇 Novo: exibição do usuário logado -->
+          <div class="text-xs text-slate-300">
+            Logado como: <span id="userNameDisplay"></span>
+          </div>
         </header>
 
         <!-- BLOCO 1 – Formulário de Upload -->
@@ -536,6 +541,9 @@
         </section>
       </main>
     </div>
+
+    <!-- 👇 Novo: script da sessão (não mexe no que já existe) -->
+    <script src="/js/session.js"></script>
 
     <!-- SCRIPT -->
     <script>

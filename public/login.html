@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Login – IA Conciliador de Fornecedores PRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+    <main class="w-full max-w-md bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl shadow-slate-950/50">
+      <h1 class="text-xl font-semibold mb-4 text-center">
+        IA Conciliador de Fornecedores <span class="text-emerald-400">PRO</span>
+      </h1>
+
+      <p class="text-sm text-slate-300 mb-4 text-center">
+        Acesse com seu e-mail e senha para utilizar a IA.
+      </p>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm mb-1" for="email">E-mail</label>
+          <input
+            id="email"
+            type="email"
+            required
+            class="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400/80"
+            placeholder="voce@empresa.com"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1" for="password">Senha</label>
+          <div class="relative">
+            <input
+              id="password"
+              type="password"
+              required
+              class="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400/80 pr-10"
+            />
+            <button
+              type="button"
+              id="togglePassword"
+              class="absolute inset-y-0 right-0 px-3 text-xs text-slate-400 hover:text-slate-100"
+            >
+              mostrar
+            </button>
+          </div>
+        </div>
+
+        <p id="loginMessage" class="text-sm text-center text-rose-300 hidden"></p>
+
+        <button
+          type="submit"
+          class="w-full rounded-xl bg-emerald-500 text-slate-950 font-semibold py-2 text-sm hover:bg-emerald-400"
+        >
+          Entrar
+        </button>
+      </form>
+
+      <div class="mt-4 flex justify-between text-xs text-slate-400">
+        <a href="/esqueceu-senha.html" class="hover:text-emerald-300">
+          Esqueceu a senha?
+        </a>
+        <a href="/index.html" class="hover:text-slate-200">
+          Voltar para a página inicial
+        </a>
+      </div>
+    </main>
+
+    <script src="/js/auth.js"></script>
+  </body>
+</html>

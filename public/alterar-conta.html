@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Minha conta – IA Fornecedores PRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+    <main class="w-full max-w-md bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl shadow-slate-950/50">
+      <h1 class="text-xl font-semibold mb-4 text-center">
+        Minha conta
+      </h1>
+
+      <p
+        id="accountModeInfo"
+        class="text-xs text-center text-slate-400 mb-4"
+      ></p>
+
+      <form id="accountForm" class="space-y-4">
+        <div id="accountFields">
+          <div>
+            <label class="block text-sm mb-1" for="name">Nome</label>
+            <input
+              id="name"
+              type="text"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400/80"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm mb-1" for="email">E-mail</label>
+            <input
+              id="email"
+              type="email"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400/80"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm mb-1" for="newPassword">
+            Nova senha (opcional)
+          </label>
+          <div class="relative">
+            <input
+              id="newPassword"
+              type="password"
+              class="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400/80 pr-10"
+            />
+            <button
+              type="button"
+              id="toggleNewPassword"
+              class="absolute inset-y-0 right-0 px-3 text-xs text-slate-400 hover:text-slate-100"
+            >
+              mostrar
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Mínimo de 6 caracteres. Se informar, você precisará fazer login novamente.
+          </p>
+        </div>
+
+        <p
+          id="accountMessage"
+          class="text-sm text-center text-emerald-300 hidden"
+        ></p>
+
+        <button
+          type="submit"
+          class="w-full rounded-xl bg-emerald-500 text-slate-950 font-semibold py-2 text-sm hover:bg-emerald-400"
+        >
+          Salvar
+        </button>
+      </form>
+
+      <div class="mt-4 text-center text-xs text-slate-400">
+        <a href="/index.html" class="hover:text-emerald-300">
+          Voltar para a conciliação
+        </a>
+      </div>
+
+      <p
+        id="deviceInfo"
+        class="mt-3 text-[11px] text-slate-500 text-center"
+      ></p>
+    </main>
+
+    <script src="/js/auth.js"></script>
+  </body>
+</html>

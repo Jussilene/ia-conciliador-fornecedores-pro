@@ -6,6 +6,8 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser";
+import authRoutes from "./routes/auth.routes.js";
 import fornecedoresRoutes from "./routes/fornecedores.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +17,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // servir arquivos estáticos do front (pasta public)
 app.use(express.static(path.join(__dirname, "..", "public")));
@@ -34,6 +38,9 @@ app.get("/", (req, res) => {
 app.get("/fornecedores", (req, res) => {
   return res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
+
+// rotas de autenticação
+app.use("/api/auth", authRoutes);
 
 // rotas da API (igual estava)
 app.use("/api/fornecedores", fornecedoresRoutes);
