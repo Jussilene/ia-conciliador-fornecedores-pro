@@ -8,6 +8,7 @@ import {
 } from "../services/conciliacao.service.js";
 
 import { logInfo, logError } from "../utils/logger.js";
+import { gerarExcelDivergencias } from "../utils/excelExport.js";
 
 /**
  * Helper simples para tentar detectar nomes de fornecedores
@@ -105,11 +106,10 @@ export async function uploadRelatorios(req, res) {
 
     return res.status(200).json(resultado);
   } catch (err) {
-    logError(
-      "uploadRelatorios",
-      "Erro no uploadRelatorios",
-      { message: err.message, stack: err.stack }
-    );
+    logError("uploadRelatorios", "Erro no uploadRelatorios", {
+      message: err.message,
+      stack: err.stack,
+    });
     return res.status(500).json({
       error: "Erro interno ao processar relatórios de fornecedores.",
       detalhe: err.message,
@@ -205,14 +205,74 @@ export async function conciliarRodada1(req, res) {
       rodada: rodadaSelecionada,
     });
   } catch (err) {
-    logError(
-      "conciliarRodada1Controller",
-      "Erro em conciliarRodada1",
-      { message: err.message, stack: err.stack }
-    );
+    logError("conciliarRodada1Controller", "Erro em conciliarRodada1", {
+      message: err.message,
+      stack: err.stack,
+    });
 
     return res.status(500).json({
       error: "Erro interno ao executar conciliação.",
+      detalhe: err.message,
+    });
+  }
+}
+
+/**
+ * 🔹 Novo endpoint: exporta divergências / títulos / pagamentos órfãos para Excel
+ *
+ * Espera no body:
+ *  - fornecedor
+ *  - rodada
+ *  - divergencias (array)
+ *  - titulosVencidos (array)  [opcional]
+ *  - pagamentosOrfaos (array) [opcional]
+ */
+export async function exportarDivergenciasExcel(req, res) {
+  try {
+    const {
+      fornecedor,
+      rodada,
+      divergencias,
+      titulosVencidos,
+      pagamentosOrfaos,
+    } = req.body || {};
+
+    if (!fornecedor) {
+      return res
+        .status(400)
+        .json({ error: "Campo 'fornecedor' é obrigatório." });
+    }
+
+    const divergArr = Array.isArray(divergencias) ? divergencias : [];
+    const titulosArr = Array.isArray(titulosVencidos) ? titulosVencidos : [];
+    const orfaosArr = Array.isArray(pagamentosOrfaos) ? pagamentosOrfaos : [];
+
+    const { buffer, filename } = gerarExcelDivergencias({
+      fornecedor,
+      rodada,
+      divergencias: divergArr,
+      titulosVencidos: titulosArr,
+      pagamentosOrfaos: orfaosArr,
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${filename}"`
+    );
+
+    return res.status(200).send(buffer);
+  } catch (err) {
+    logError(
+      "exportarDivergenciasExcel",
+      "Erro ao gerar Excel de divergências",
+      { message: err.message, stack: err.stack }
+    );
+    return res.status(500).json({
+      error: "Erro interno ao gerar arquivo Excel.",
       detalhe: err.message,
     });
   }

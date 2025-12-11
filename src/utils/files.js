@@ -38,39 +38,90 @@ export function readExcel(filePath) {
 }
 
 /**
+ * Lê arquivo de texto (txt / csv / etc.)
+ */
+export function readText(filePath) {
+  try {
+    const text = fs.readFileSync(filePath, "utf8");
+    return text || "";
+  } catch (err) {
+    console.error("[utils/files] Erro ao ler texto:", err.message);
+    return "";
+  }
+}
+
+/**
  * Detecta automaticamente o tipo de arquivo e processa
+ *
+ * IMPORTANTE:
+ * - Sempre que possível, preenche:
+ *    - tipo
+ *    - conteudoTexto (string)
+ *    - preview (primeiras linhas)
+ *    - tamanhoTexto (length)
+ * - Para Excel, também devolve "linhas" (array de objetos)
  */
 export async function processFile(fileInfo) {
   if (!fileInfo) return null;
 
   const { mimetype, path } = fileInfo;
+  const lowerPath = path.toLowerCase();
 
-  // PDF
-  if (mimetype === "application/pdf") {
-    const text = await readPDF(path);
+  // Helper para montar preview + tamanho
+  function montarResumoTexto(text, tipo, extra = {}) {
+    const conteudoTexto = text || "";
+    const tamanhoTexto = conteudoTexto.length;
+    const preview = conteudoTexto.slice(0, 1200);
+
     return {
-      tipo: "pdf",
-      conteudoTexto: text,
+      tipo,
+      conteudoTexto,
+      tamanhoTexto,
+      preview,
+      ...extra,
     };
   }
 
-  // Excel / planilha
+  // 🔹 PDF
+  if (mimetype === "application/pdf" || lowerPath.endsWith(".pdf")) {
+    const text = await readPDF(path);
+    return montarResumoTexto(text, "pdf");
+  }
+
+  // 🔹 Excel / planilha (xlsx/xls ou mimetype de planilha)
   if (
     mimetype.includes("excel") ||
     mimetype.includes("spreadsheet") ||
-    path.toLowerCase().endsWith(".xlsx") ||
-    path.toLowerCase().endsWith(".xls")
+    lowerPath.endsWith(".xlsx") ||
+    lowerPath.endsWith(".xls")
   ) {
     const rows = readExcel(path);
-    return {
-      tipo: "excel",
+
+    // Converte as linhas em um texto "linearizado" para a IA
+    const linhasComoTexto = rows
+      .map((row) => Object.values(row).join(" | "))
+      .join("\n");
+
+    return montarResumoTexto(linhasComoTexto, "excel", {
       linhas: rows,
-    };
+    });
   }
 
-  // Outros formatos (podemos tratar depois)
+  // 🔹 CSV / TXT / similares
+  if (
+    mimetype.startsWith("text/") ||
+    lowerPath.endsWith(".csv") ||
+    lowerPath.endsWith(".txt")
+  ) {
+    const text = readText(path);
+    return montarResumoTexto(text, "texto");
+  }
+
+  // 🔹 Outros formatos (não tratados ainda)
   return {
     tipo: "desconhecido",
     conteudoTexto: null,
+    tamanhoTexto: 0,
+    preview: null,
   };
 }

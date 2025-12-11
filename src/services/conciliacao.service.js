@@ -588,11 +588,10 @@ ${JSON.stringify(entradaIA, null, 2)}
       respostaBruta: rawContent,
     };
   } catch (err) {
-    logError(
-      "realizarConciliacao",
-      "Erro na chamada OpenAI",
-      { message: err.message, stack: err.stack }
-    );
+    logError("realizarConciliacao", "Erro na chamada OpenAI", {
+      message: err.message,
+      stack: err.stack,
+    });
 
     return {
       fornecedor,
@@ -647,7 +646,7 @@ function extrairIdentificadoresDeRelatorios(relatoriosProcessados = {}) {
   return { cnpjs, cpfs };
 }
 
-// ⚠️ NOVO HELPER (USADO APENAS NA RODADA 3)
+// ⚠️ NOVO HELPER (USADO NA RODADA 3 E AGORA TAMBÉM NA 1)
 // Calcula o Sub Total de títulos em aberto para o fornecedor no Contas a Pagar
 function calcularSubtotalTitulosContasPagar(textoContas, nomeFornecedor) {
   if (!textoContas || !nomeFornecedor) return null;
@@ -810,6 +809,63 @@ export async function conciliarRodada1({
     arquivos,
     simulacao,
   });
+
+  // 🔧 AJUSTE EXTRA: força o valor dos títulos vencidos a seguir
+  // o Sub Total do fornecedor no Contas a Pagar (igual Rodada 3),
+  // sem mudar estrutura nenhuma – só o número.
+  try {
+    const relatoriosProcessados = base.uploadProcessado?.relatorios || {};
+    const estrutura = base.conciliacao?.estrutura;
+
+    if (estrutura && relatoriosProcessados) {
+      const contasTexto =
+        relatoriosProcessados?.contas_pagar?.processado?.conteudoTexto || "";
+
+      const subtotalTitulos = calcularSubtotalTitulosContasPagar(
+        contasTexto,
+        fornecedor
+      );
+
+      if (subtotalTitulos !== null && !Number.isNaN(subtotalTitulos)) {
+        let titulosArr = estrutura.titulosVencidosSemContrapartida;
+        if (!Array.isArray(titulosArr)) {
+          titulosArr = [];
+        }
+
+        if (titulosArr.length === 0) {
+          titulosArr.push({
+            descricao:
+              "Títulos em aberto no contas a pagar para o fornecedor (subtotal calculado automaticamente).",
+            tipo: "titulo_sem_pagamento",
+            referencias: [
+              `Fornecedor: ${fornecedor}`,
+              "Relatório: Contas a Pagar por Fornecedor (Sub Total)",
+            ],
+            valorEstimado: subtotalTitulos,
+            diasEmAtrasoEstimado: null,
+          });
+        } else {
+          titulosArr = titulosArr.map((t, index) => {
+            if (index === 0) {
+              return {
+                ...t,
+                valorEstimado: subtotalTitulos,
+              };
+            }
+            return t;
+          });
+        }
+
+        estrutura.titulosVencidosSemContrapartida = titulosArr;
+        // garante que o objeto de conciliação continua apontando para a mesma estrutura
+        base.conciliacao.estrutura = estrutura;
+      }
+    }
+  } catch (err) {
+    logWarn("conciliarRodada1Service", "Falha ao ajustar subtotal na Rodada 1", {
+      message: err.message,
+    });
+  }
 
   return {
     ...base,
@@ -1032,11 +1088,7 @@ export async function conciliarRodada3({
   // marca perfil da conciliação
   baseRodada1.conciliacao.perfilFornecedor = "auditoria_mensal";
 
-  logInfo(
-    "conciliarRodada3Service",
-    "Resumo mensal gerado",
-    resumoMensal
-  );
+  logInfo("conciliarRodada3Service", "Resumo mensal gerado", resumoMensal);
 
   // 5) Marca a etapa corretamente para a UI e devolve também os campos na raiz
   return {

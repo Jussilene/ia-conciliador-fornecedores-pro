@@ -118,13 +118,13 @@
                 <label
                   for="razaoFile"
                   class="block text-sm font-medium text-slate-200 mb-1"
-                  >Razão de Fornecedores (PDF)</label
+                  >Razão de Fornecedores (PDF/Excel/CSV/TXT)</label
                 >
                 <input
                   id="razaoFile"
                   name="razao"
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.xls,.xlsx,.csv,.txt"
                   required
                   class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
                 />
@@ -134,16 +134,15 @@
                 <label
                   for="balanceteFile"
                   class="block text-sm font-medium text-slate-200 mb-1"
-                  >Balancete de Fornecedores (PDF)</label
+                  >Balancete de Fornecedores (PDF/Excel/CSV/TXT)</label
                 >
                 <input
                   id="balanceteFile"
                   name="balancete"
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.xls,.xlsx,.csv,.txt"
                   required
-                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-9
-00 hover:file:bg-emerald-400 cursor-pointer"
+                  class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
                 />
               </div>
 
@@ -151,13 +150,13 @@
                 <label
                   for="contasFile"
                   class="block text-sm font-medium text-slate-200 mb-1"
-                  >Contas a Pagar (PDF)</label
+                  >Contas a Pagar (PDF/Excel/CSV/TXT)</label
                 >
                 <input
                   id="contasFile"
                   name="contas_pagar"
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.xls,.xlsx,.csv,.txt"
                   required
                   class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
                 />
@@ -167,33 +166,31 @@
                 <label
                   for="pagamentosFile"
                   class="block text-sm font-medium text-slate-200 mb-1"
-                  >Pagamentos / Extrato (PDF)</label
+                  >Pagamentos / Extrato (PDF/Excel/CSV/TXT)</label
                 >
                 <input
                   id="pagamentosFile"
                   name="pagamentos"
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.xls,.xlsx,.csv,.txt"
                   required
                   class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
                 />
               </div>
 
               <!-- Notas Fiscais (só aparece na Rodada 4) -->
-              <div
-                id="notasFiscaisWrapper"
-                class="md:col-span-2 hidden"
-              >
+              <div id="notasFiscaisWrapper" class="md:col-span-2 hidden">
                 <label
                   for="notasFiscaisFile"
                   class="block text-sm font-medium text-slate-200 mb-1"
-                  >Notas Fiscais (PDF/CSV) – obrigatório na Rodada 4</label
+                  >Notas Fiscais (PDF/Excel/CSV/TXT) – obrigatório na Rodada
+                  4</label
                 >
                 <input
                   id="notasFiscaisFile"
                   name="notas_fiscais"
                   type="file"
-                  accept=".pdf,.csv"
+                  accept=".pdf,.xls,.xlsx,.csv,.txt"
                   class="block w-full text-xs md:text-sm text-slate-100 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-slate-900 hover:file:bg-emerald-400 cursor-pointer"
                 />
                 <p class="text-xs mt-1 text-slate-400">
@@ -348,6 +345,16 @@
             <h2 class="text-lg md:text-xl font-semibold">
               4. Divergências encontradas
             </h2>
+
+            <!-- Novo botão: exportar divergências em Excel -->
+            <button
+              id="exportExcelBtn"
+              type="button"
+              class="hidden inline-flex items-center gap-2 rounded-lg border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-xs md:text-sm font-medium text-emerald-200 hover:bg-emerald-500/20 focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <span>📊</span>
+              <span>Baixar divergências (Excel)</span>
+            </button>
           </div>
 
           <div id="divergenciasContainer" class="space-y-3 text-sm md:text-base">
@@ -410,7 +417,10 @@
               <h3 class="font-semibold text-slate-100 mb-1">
                 Pagamentos órfãos
               </h3>
-              <div id="pagamentosOrfaosConteudo" class="space-y-2 text-slate-300">
+              <div
+                id="pagamentosOrfaosConteudo"
+                class="space-y-2 text-slate-300"
+              >
                 <p class="text-slate-400 text-sm">
                   Nenhum pagamento órfão foi identificado.
                 </p>
@@ -542,7 +552,7 @@
       </main>
     </div>
 
-    <!-- 👇 Novo: script da sessão (não mexe no que já existe) -->
+    <!-- 👇 Script da sessão -->
     <script src="/js/session.js"></script>
 
     <!-- SCRIPT -->
@@ -608,8 +618,14 @@
       );
       const notasFiscaisInput = document.getElementById("notasFiscaisFile");
 
+      // Botão de exportar Excel
+      const exportExcelBtn = document.getElementById("exportExcelBtn");
+
       // 🔹 Guarda a última rodada selecionada (1, 2, 3 ou 4)
       let ultimaRodadaSelecionada = "rodada1";
+
+      // 🔹 Guarda o último resultado completo da conciliação (para exportar Excel)
+      let ultimoResultadoConciliacao = null;
 
       function setLoading(isLoading) {
         submitBtn.disabled = isLoading;
@@ -617,7 +633,7 @@
           submitBtnIcon.textContent = "⏳";
           submitBtnText.textContent = "Processando conciliação...";
           statusMensagem.textContent =
-            "Lendo PDFs, cruzando informações e gerando diagnóstico. Aguarde...";
+            "Lendo relatórios, cruzando informações e gerando diagnóstico. Aguarde...";
         } else {
           submitBtnIcon.textContent = "⚙️";
           submitBtnText.textContent = "Rodar conciliação";
@@ -653,7 +669,71 @@
 
       // já configura ao carregar
       atualizarVisibilidadeNotasFiscais();
-      tipoConcilicacao.addEventListener("change", atualizarVisibilidadeNotasFiscais);
+      tipoConcilicacao.addEventListener(
+        "change",
+        atualizarVisibilidadeNotasFiscais
+      );
+
+      // 🔹 Exportar divergências para Excel
+      async function exportarExcelDivergencias() {
+        try {
+          if (!ultimoResultadoConciliacao) {
+            alert(
+              "Rode uma conciliação antes de exportar as divergências para Excel."
+            );
+            return;
+          }
+
+          const { fornecedor, etapa, estrutura } = ultimoResultadoConciliacao;
+
+          const payload = {
+            fornecedor: fornecedor || statusFornecedor.textContent || "",
+            rodada: etapa || ultimaRodadaSelecionada || "rodada1",
+            divergencias: estrutura.divergencias || [],
+            titulosVencidos: estrutura.titulosVencidosSemContrapartida || [],
+            pagamentosOrfaos: estrutura.pagamentosOrfaos || [],
+          };
+
+          exportExcelBtn.disabled = true;
+          exportExcelBtn.innerHTML = "Gerando Excel...";
+
+          const resp = await fetch("/api/fornecedores/exportar-excel", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!resp.ok) {
+            const erro = await resp.text();
+            throw new Error(
+              "Erro ao gerar Excel: " + (erro || resp.statusText)
+            );
+          }
+
+          const blob = await resp.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "divergencias_conciliacao.xlsx";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error(err);
+          alert(err.message || "Erro ao gerar Excel de divergências.");
+        } finally {
+          exportExcelBtn.disabled = false;
+          exportExcelBtn.innerHTML =
+            '<span>📊</span><span>Baixar divergências (Excel)</span>';
+        }
+      }
+
+      if (exportExcelBtn) {
+        exportExcelBtn.addEventListener("click", exportarExcelDivergencias);
+      }
 
       function renderResultado(data) {
         console.log("🔎 RESPOSTA DA API:", data);
@@ -668,10 +748,7 @@
 
         // ✅ Etapa vinda do backend (para exibição)
         let etapaBruta =
-          data.rodada ||
-          data.etapa ||
-          ultimaRodadaSelecionada ||
-          "rodada1";
+          data.rodada || data.etapa || ultimaRodadaSelecionada || "rodada1";
 
         if (!["rodada1", "rodada2", "rodada3", "rodada4"].includes(etapaBruta)) {
           etapaBruta = ultimaRodadaSelecionada || "rodada1";
@@ -700,6 +777,14 @@
         const status = conciliacao.status || "—";
 
         const etapaFinal = etapaLabel;
+
+        // 🔹 Guarda o último resultado para exportar depois
+        ultimoResultadoConciliacao = {
+          fornecedor,
+          etapa: etapaBruta,
+          estrutura,
+          conciliacao,
+        };
 
         // Bloco 2
         statusFornecedor.textContent = fornecedor;
@@ -753,6 +838,8 @@
         if (!divergencias.length) {
           divergenciasContainer.innerHTML =
             '<p class="text-slate-300 text-sm">Nenhuma divergência relevante foi identificada para este fornecedor.</p>';
+          // esconde botão de Excel se não tiver divergência
+          if (exportExcelBtn) exportExcelBtn.classList.add("hidden");
         } else {
           divergenciasContainer.innerHTML = "";
           divergencias.forEach((div, idx) => {
@@ -802,6 +889,9 @@
             `;
             divergenciasContainer.appendChild(card);
           });
+
+          // mostra botão de Excel
+          if (exportExcelBtn) exportExcelBtn.classList.remove("hidden");
         }
 
         // Sub-bloco – Divergências de Notas Fiscais

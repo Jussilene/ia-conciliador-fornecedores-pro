@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import {
   uploadRelatorios as uploadRelatoriosController,
   conciliarRodada1 as conciliarRodadaController,
+  exportarDivergenciasExcel,
 } from "../controllers/fornecedores.controller.js";
 
 const router = Router();
@@ -91,5 +92,11 @@ router.post(
   normalizarFiles,
   conciliarRodadaController
 );
+
+/**
+ * ROTA 3: /api/fornecedores/exportar-excel
+ * Recebe JSON no body e devolve o arquivo Excel com as divergências.
+ */
+router.post("/exportar-excel", exportarDivergenciasExcel);
 
 export default router;
